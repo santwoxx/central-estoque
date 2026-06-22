@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { 
   signInWithPopup, 
   GoogleAuthProvider, 
-  signInAnonymously,
   signOut
 } from "firebase/auth";
 import { 
@@ -24,8 +23,7 @@ interface AuthScreenProps {
 export default function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
   // Google Auth Stage
   const [googleUser, setGoogleUser] = useState<{ email: string; uid: string; displayName: string } | null>(null);
-  const [iframeEmail, setIframeEmail] = useState("");
-  const [showSimulator, setShowSimulator] = useState(false);
+
   const [hasDomainError, setHasDomainError] = useState(false);
 
   // Credential Input Stage
@@ -78,54 +76,13 @@ export default function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
         setHasDomainError(true);
         setError("Erro de autorização do Firebase (auth/unauthorized-domain): O domínio atual não está autorizado nas configurações de autenticação do seu projeto Firebase.");
       } else {
-        setError(
-          "Erro ao acessar Google. Se estiver usando o visualizador embutido do AI Studio, use o 'Simulador Iframe' abaixo devido a restrições de pop-ups dos navegadores."
-        );
+        setError("Erro ao acessar Google. Verifique sua conexão e se os pop-ups estão liberados no navegador.");
       }
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle Mock Google login for secure environment validation inside constrained frame
-  const handleGoogleLoginSimulator = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!iframeEmail || !iframeEmail.includes("@")) {
-      setError("Por favor, insira um e-mail válido para simulação.");
-      return;
-    }
-    setError("");
-    setHasDomainError(false);
-    setLoading(true);
-
-    try {
-      // Authenticate anonymously so the user has a real Firebase session ID
-      const result = await signInAnonymously(auth);
-      
-      const payload = {
-        email: iframeEmail.trim().toLowerCase(),
-        uid: result.user.uid,
-        displayName: iframeEmail.split("@")[0].toUpperCase()
-      };
-
-      // Seed database if administrative email
-      await autoSeedAdminCreds(payload.email);
-
-      setGoogleUser(payload);
-      sessionStorage.setItem("cached_google_auth", JSON.stringify(payload));
-      setSuccessMsg(`[Simulado Iframe] Identidade Google definida para: ${payload.email}. Insira o Usuário e Senha de seu painel.`);
-    } catch (err: any) {
-      console.error(err);
-      if (err.code === "auth/unauthorized-domain") {
-        setHasDomainError(true);
-        setError("Erro no Simulador (auth/unauthorized-domain): O domínio atual não está autorizado a realizar operações de Autenticação Firebase.");
-      } else {
-        setError("Erro ao inicializar sessão autenticada de simulação. Verifique se o recurso de login anônimo está habilitado no Console do Firebase.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Automatically seeds credentials in First Use if database list is empty, specifically for administrative addresses
   const autoSeedAdminCreds = async (email: string) => {
@@ -385,40 +342,7 @@ export default function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
               Autenticar com o Google
             </button>
 
-            {/* Simulated Fallback specifically for IFrame constraints in developer environments */}
-            <div className="pt-2 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => setShowSimulator(!showSimulator)}
-                className="text-[11px] font-bold text-gold-600 hover:text-gold-750 flex items-center justify-center gap-1 mx-auto transition-all focus:outline-none cursor-pointer tracking-wider"
-              >
-                <Sparkles size={11} className="stroke-[2px] text-gold-500" />
-                {showSimulator ? "Voltar ao Login Padrão" : "Entrar via Simulador Integrado Iframe"}
-              </button>
 
-              {showSimulator && (
-                <form onSubmit={handleGoogleLoginSimulator} className="mt-3.5 space-y-3 bg-slate-50/80 p-4 rounded-xl border border-slate-200">
-                  <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                    <Mail size={12} className="text-slate-400 shrink-0" />
-                    <span>Configuração de E-mail de Simulação</span>
-                  </div>
-                  <input
-                    type="email"
-                    required
-                    value={iframeEmail}
-                    onChange={(e) => setIframeEmail(e.target.value)}
-                    className="block w-full px-3 py-2 border border-slate-200 rounded-xl text-slate-800 bg-white text-xs outline-none focus:ring-4 focus:ring-gold-500/10 focus:border-gold-550 transition-all placeholder:text-slate-350"
-                    placeholder="Digite seu e-mail (Ex: brisasofc@gmail.com)"
-                  />
-                  <button
-                    type="submit"
-                    className="w-full py-2 px-4 rounded-xl bg-[#2a251a] hover:bg-[#3d3727] text-white font-black text-xs shadow-sm transition-colors cursor-pointer uppercase tracking-wider"
-                  >
-                    Logar Identidade Simulada
-                  </button>
-                </form>
-              )}
-            </div>
           </div>
         ) : (
           /* ================= STAGE 2: CREDENTIAL FROM USER/PASS ================= */

@@ -88,7 +88,7 @@ export default function App() {
 
           // Safe guards for administrative emails
           const targetEmail = (firebaseUser.email || "").toLowerCase().trim();
-          if (targetEmail === "brisasofc@gmail.com" || targetEmail === "isaacbomfim.te@gmail.com") {
+          if (targetEmail === "brisasofc@gmail.com" || targetEmail === "isaacbomfim.te@gmail.com" || targetEmail === "isaacbomfim.00@gmail.com") {
             role = "admin";
           }
 

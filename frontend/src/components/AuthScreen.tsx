@@ -65,7 +65,7 @@ export default function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
       };
 
       const targetEmail = payload.email.toLowerCase().trim();
-      if (targetEmail === "brisasofc@gmail.com" || targetEmail === "isaacbomfim.te@gmail.com") {
+      if (targetEmail === "brisasofc@gmail.com" || targetEmail === "isaacbomfim.te@gmail.com" || targetEmail === "isaacbomfim.00@gmail.com") {
         // Bypass stage 2 completely for super admins
         const secAuthKey = `sec_auth_${payload.uid}`;
         sessionStorage.setItem(secAuthKey, "true");
@@ -102,7 +102,7 @@ export default function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
   // Automatically seeds credentials in First Use if database list is empty, specifically for administrative addresses
   const autoSeedAdminCreds = async (email: string) => {
     const targetEmail = email.toLowerCase().trim();
-    if (targetEmail === "brisasofc@gmail.com" || targetEmail === "isaacbomfim.te@gmail.com") {
+    if (targetEmail === "brisasofc@gmail.com" || targetEmail === "isaacbomfim.te@gmail.com" || targetEmail === "isaacbomfim.00@gmail.com") {
       try {
         const usernameSeed = targetEmail === "brisasofc@gmail.com" ? "central" : "isaac";
         const passwordSeed = targetEmail === "brisasofc@gmail.com" ? "@#central@#" : "123";

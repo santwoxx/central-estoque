@@ -102,11 +102,7 @@ export default function App() {
           });
 
           // Default tab logic based on role
-          if (role === "vendedor") {
-            setActiveTab("unified");
-          } else {
-            setActiveTab("inventory");
-          }
+          setActiveTab("unified");
         } catch (profileError) {
           console.error("Erro ao recuperar perfil:", profileError);
           setUser(null);
@@ -507,6 +503,7 @@ export default function App() {
                   <Warehouse size={13} className="stroke-[2px]" /> Estoque Unificado
                 </button>
               )}
+
               {(user.role === "alimentador" || user.role === "admin") && (
                 <button
                   type="button"
@@ -517,7 +514,7 @@ export default function App() {
                       : "text-slate-300 border-transparent hover:bg-slate-900 hover:text-white"
                   }`}
                 >
-                  <Layers size={13} className="stroke-[2px]" /> Estoque Principal
+                  <Layers size={13} className="stroke-[2px]" /> Cadastros e Ajustes
                 </button>
               )}
               <button
@@ -612,6 +609,7 @@ export default function App() {
             <span className="text-[9px] font-extrabold uppercase tracking-wide">Geral</span>
           </button>
         )}
+
         {(user.role === "alimentador" || user.role === "admin") && (
           <button
             type="button"
@@ -621,7 +619,7 @@ export default function App() {
             }`}
           >
             <Layers size={18} />
-            <span className="text-[9px] font-extrabold uppercase tracking-wide">Estoque</span>
+            <span className="text-[9px] font-extrabold uppercase tracking-wide">Cadastros</span>
           </button>
         )}
         <button
@@ -711,7 +709,18 @@ export default function App() {
         <div className="transition-all duration-200">
           {activeTab === "unified" && (
             <div className="space-y-4">
-              <UnifiedStock items={stock} />
+              {loadingData && (
+                <div className="bg-blue-50 border border-blue-100/60 text-blue-800 px-4 py-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm animate-fadeIn">
+                  <div className="h-3 w-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                  Sincronizando estoque operacional em tempo real...
+                </div>
+              )}
+              <UnifiedStock 
+                items={stock} 
+                user={user} 
+                onUpdateItem={handleUpdateItem} 
+                onAddItem={handleAddItem} 
+              />
             </div>
           )}
 

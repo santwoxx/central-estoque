@@ -1,0 +1,115 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with role and associated company information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "companyId": { "type": "string" },
+        "companyName": { "type": "string" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Company": {
+      "title": "Company",
+      "description": "Company registration information",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name"]
+    },
+    "StockItem": {
+      "title": "StockItem",
+      "description": "Inventory stock item",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "sku": { "type": "string" },
+        "brand": { "type": "string" },
+        "model": { "type": "string" },
+        "size": { "type": "string" },
+        "quantity": { "type": "number" },
+        "price": { "type": "number" },
+        "notes": { "type": "string" },
+        "description": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "companyId": { "type": "string" },
+        "companyName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["sku", "brand", "model", "size", "quantity", "price", "userId", "userEmail"]
+    },
+    "MovementLog": {
+      "title": "MovementLog",
+      "description": "Logs tracking stock item state changes over time",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "sku": { "type": "string" },
+        "brand": { "type": "string" },
+        "model": { "type": "string" },
+        "size": { "type": "string" },
+        "type": { "type": "string", "enum": ["ENTRADA", "SAIDA", "IMPORTACAO", "AJUSTE"] },
+        "quantity": { "type": "number" },
+        "balanceAfter": { "type": "number" },
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "companyId": { "type": "string" },
+        "companyName": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "reason": { "type": "string" }
+      },
+      "required": ["sku", "brand", "model", "size", "type", "quantity", "balanceAfter", "userId", "userEmail", "reason"]
+    },
+    "Credential": {
+      "title": "Credential",
+      "description": "Custom site credentials stored by users/admins",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "username": { "type": "string" },
+        "password": { "type": "string" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "associatedEmail": { "type": "string" },
+        "companyId": { "type": "string" },
+        "companyName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["username", "password", "role", "associatedEmail"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profiles collection"
+    },
+    "companies/{companyId}": {
+      "schema": "Company",
+      "description": "Companies list collection"
+    },
+    "stock/{itemId}": {
+      "schema": "StockItem",
+      "description": "Inventory stock items collection"
+    },
+    "movements/{movementId}": {
+      "schema": "MovementLog",
+      "description": "Inventory transaction history logs collection"
+    },
+    "custom_credentials/{credId}": {
+      "schema": "Credential",
+      "description": "Custom user login credentials collection"
+    }
+  }
+}

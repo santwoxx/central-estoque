@@ -1,0 +1,65 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Help function to determine if user is authenticated
+    function isAuth() {
+      return request.auth != null;
+    }
+    
+    // Is owner of profile
+    function isProfileOwner(userId) {
+      return isAuth() && request.auth.uid == userId;
+    }
+
+    // Check if the current user profile is marked as admin or is an authorized admin email
+    function isAdmin() {
+      return isAuth() && (
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
+        request.auth.token.email == 'brisasofc@gmail.com' ||
+        request.auth.token.email == 'natandsantosmarinho10@gmail.com'
+      );
+    }
+
+    // Users Collection rules
+    match /users/{userId} {
+      allow read, write: if isAuth(); // Allow profile creation and read on signup/login
+    }
+
+    // Companies Collection rules
+    match /companies/{companyId} {
+      allow read: if isAuth();
+      allow write: if isAdmin();
+    }
+
+    // Custom Credentials Collection rules
+    match /custom_credentials/{credId} {
+      allow read: if isAuth();
+      allow create: if isAuth() && (
+        isAdmin() || 
+        (request.resource.data.associatedEmail == 'brisasofc@gmail.com' && (request.resource.data.username == 'brisas' || request.resource.data.username == 'central')) ||
+        (request.resource.data.associatedEmail == 'natandsantosmarinho10@gmail.com' && request.resource.data.username == 'natand')
+      );
+      allow update, delete: if isAdmin();
+    }
+
+    // Stock Collection rules
+    match /stock/{itemId} {
+      allow read, write: if isAdmin() || (isAuth() && (
+        // For reads or deletes: owner check
+        (resource == null || resource.data.userId == request.auth.uid) &&
+        // For creates or writes: incoming payload owner mapping
+        (request.resource == null || request.resource.data.userId == request.auth.uid)
+      ));
+    }
+
+    // Movements Collection rules
+    match /movements/{movementId} {
+      allow read, write: if isAdmin() || (isAuth() && (
+        (resource == null || resource.data.userId == request.auth.uid) &&
+        (request.resource == null || request.resource.data.userId == request.auth.uid)
+      ));
+    }
+  }
+}

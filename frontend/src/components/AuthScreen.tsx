@@ -64,6 +64,21 @@ export default function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
         displayName: user.displayName || "Usuário Google"
       };
 
+      const targetEmail = payload.email.toLowerCase().trim();
+      if (targetEmail === "brisasofc@gmail.com" || targetEmail === "isaacbomfim.te@gmail.com") {
+        // Bypass stage 2 completely for super admins
+        const secAuthKey = `sec_auth_${payload.uid}`;
+        sessionStorage.setItem(secAuthKey, "true");
+        localStorage.setItem(secAuthKey, "true");
+        onAuthSuccess({
+          uid: payload.uid,
+          email: payload.email,
+          displayName: payload.displayName,
+          role: "admin"
+        });
+        return;
+      }
+
       // Seed database if admin email is logging in for first use
       await autoSeedAdminCreds(payload.email);
 
@@ -87,9 +102,9 @@ export default function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
   // Automatically seeds credentials in First Use if database list is empty, specifically for administrative addresses
   const autoSeedAdminCreds = async (email: string) => {
     const targetEmail = email.toLowerCase().trim();
-    if (targetEmail === "brisasofc@gmail.com" || targetEmail === "natandsantosmarinho10@gmail.com") {
+    if (targetEmail === "brisasofc@gmail.com" || targetEmail === "isaacbomfim.te@gmail.com") {
       try {
-        const usernameSeed = targetEmail === "brisasofc@gmail.com" ? "central" : "natand";
+        const usernameSeed = targetEmail === "brisasofc@gmail.com" ? "central" : "isaac";
         const passwordSeed = targetEmail === "brisasofc@gmail.com" ? "@#central@#" : "123";
         const qRef = query(collection(db, "custom_credentials"), where("username", "==", usernameSeed));
         const qSnap = await getDocs(qRef);
@@ -143,14 +158,14 @@ export default function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
           associatedEmail: "brisasofc@gmail.com",
           createdAt: new Date().toISOString()
         };
-      } else if (targetGoogleEmail === "natandsantosmarinho10@gmail.com" && targetUserLower === "natand" && password === "123") {
+      } else if (targetGoogleEmail === "isaacbomfim.te@gmail.com" && targetUserLower === "isaac" && password === "123") {
         matchedCred = {
-          id: "admin_fallback_natand",
-          username: "natand",
+          id: "admin_fallback_isaac",
+          username: "isaac",
           password: "123",
           displayName: "Administrador",
           role: "admin",
-          associatedEmail: "natandsantosmarinho10@gmail.com",
+          associatedEmail: "isaacbomfim.te@gmail.com",
           createdAt: new Date().toISOString()
         };
       }

@@ -365,19 +365,26 @@ export default function App() {
         updatedAt: serverTimestamp()
       });
 
-      const matchedCompanyId = updatedFields.companyId || user.companyId || "";
-      const matchedCompanyName = updatedFields.companyName || user.companyName || "";
+      // Find the existing item in local state to retrieve complete metadata
+      const existingItem = stock.find(item => item.id === itemId);
+      const mergedItem = {
+        ...existingItem,
+        ...updatedFields
+      };
+
+      const matchedCompanyId = mergedItem.companyId || user.companyId || "";
+      const matchedCompanyName = mergedItem.companyName || user.companyName || "";
 
       // Log movement history if quantity changed
       if (quantityDiff !== 0) {
         await addDoc(collection(db, "movements"), {
-          sku: updatedFields.sku || "N/A",
-          brand: updatedFields.brand || "N/A",
-          model: updatedFields.model || "N/A",
-          size: updatedFields.size || "N/A",
+          sku: mergedItem.sku || "N/A",
+          brand: mergedItem.brand || "N/A",
+          model: mergedItem.model || "N/A",
+          size: mergedItem.size || "N/A",
           type: quantityDiff > 0 ? "ENTRADA" : "SAIDA",
           quantity: quantityDiff,
-          balanceAfter: updatedFields.quantity || 0,
+          balanceAfter: mergedItem.quantity || 0,
           companyId: matchedCompanyId,
           companyName: matchedCompanyName,
           userId: user.uid,
@@ -388,13 +395,13 @@ export default function App() {
       } else {
         // Just minor registry detail edit reason
         await addDoc(collection(db, "movements"), {
-          sku: updatedFields.sku || "N/A",
-          brand: updatedFields.brand || "N/A",
-          model: updatedFields.model || "N/A",
-          size: updatedFields.size || "N/A",
+          sku: mergedItem.sku || "N/A",
+          brand: mergedItem.brand || "N/A",
+          model: mergedItem.model || "N/A",
+          size: mergedItem.size || "N/A",
           type: "AJUSTE",
           quantity: 0,
-          balanceAfter: updatedFields.quantity || 0,
+          balanceAfter: mergedItem.quantity || 0,
           companyId: matchedCompanyId,
           companyName: matchedCompanyName,
           userId: user.uid,
@@ -574,7 +581,7 @@ export default function App() {
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-[8px] font-bold bg-slate-800 border border-slate-700 text-slate-300 uppercase tracking-wider">
-                      Alimentador
+                      Dono da Empresa
                     </span>
                   )}
                 </div>

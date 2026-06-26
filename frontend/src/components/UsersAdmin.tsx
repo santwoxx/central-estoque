@@ -483,7 +483,7 @@ export default function UsersAdmin() {
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-slate-50 text-slate-600 border border-slate-200 uppercase tracking-widest">
-                              Alimentador
+                              Dono da Empresa
                             </span>
                           )}
                         </td>
@@ -818,7 +818,7 @@ export default function UsersAdmin() {
                         : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100"
                     }`}
                   >
-                    Alimentador
+                    Dono da Empresa
                   </button>
                   <button
                     type="button"

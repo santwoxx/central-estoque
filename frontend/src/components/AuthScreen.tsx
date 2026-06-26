@@ -254,12 +254,12 @@ export default function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center bg-[#f7f5f0] px-4 py-12 sm:px-6 lg:px-8 font-sans select-none">
+    <div className="min-h-screen flex flex-col justify-center bg-[#eff6ff] px-4 py-12 sm:px-6 lg:px-8 font-sans select-none">
       <div className="absolute top-4 right-4 text-xs font-mono text-slate-400 font-semibold uppercase tracking-widest hidden sm:block">
         Security Node: <span className="text-gold-600 font-black">Encrypted SSL</span>
       </div>
 
-      <div className="max-w-md w-full mx-auto space-y-6 bg-white p-8 rounded-3xl shadow-[0_12px_40px_rgba(184,134,11,0.06)] border border-slate-200/80 animate-scaleUp border-t-4 border-t-gold-500">
+      <div className="max-w-md w-full mx-auto space-y-6 bg-white p-8 rounded-3xl shadow-[0_12px_40px_rgba(37,99,235,0.06)] border border-slate-200/85 animate-scaleUp border-t-4 border-t-gold-500">
         
         {/* Header / Logo */}
         <div className="text-center space-y-3">

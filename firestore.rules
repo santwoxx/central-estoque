@@ -7,11 +7,6 @@ service cloud.firestore {
       return request.auth != null;
     }
     
-    // Is owner of profile
-    function isProfileOwner(userId) {
-      return isAuth() && request.auth.uid == userId;
-    }
-
     // Check if the current user profile is marked as admin or is an authorized admin email
     function isAdmin() {
       return isAuth() && (
@@ -20,6 +15,24 @@ service cloud.firestore {
         request.auth.token.email == 'brisasofc@gmail.com' ||
         request.auth.token.email == 'natandsantosmarinho10@gmail.com'
       );
+    }
+
+    // Helper to get user profile data
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // Helper to check user roles
+    function isVendedor() {
+      return isAuth() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+        getUserData().role == 'vendedor';
+    }
+
+    function isAlimentador() {
+      return isAuth() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+        (getUserData().role == 'alimentador' || getUserData().role == 'user');
     }
 
     // Users Collection rules
@@ -46,20 +59,52 @@ service cloud.firestore {
 
     // Stock Collection rules
     match /stock/{itemId} {
-      allow read, write: if isAdmin() || (isAuth() && (
-        // For reads or deletes: owner check
-        (resource == null || resource.data.userId == request.auth.uid) &&
-        // For creates or writes: incoming payload owner mapping
-        (request.resource == null || request.resource.data.userId == request.auth.uid)
-      ));
+      // Admins and Vendedores can read all stock items.
+      // Alimentadores (Company Owners) can only read their own company's items.
+      allow read: if isAdmin() || isVendedor() || (
+        isAuth() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        resource.data.companyId == getUserData().companyId
+      );
+      
+      // Admin can create anything. Donos/Alimentadores can only create for their own company.
+      allow create: if isAdmin() || (
+        isAlimentador() && 
+        request.resource.data.companyId == getUserData().companyId
+      );
+      
+      // Admin can update anything. Donos/Alimentadores can only update their own company's items.
+      allow update: if isAdmin() || (
+        isAlimentador() && 
+        resource.data.companyId == getUserData().companyId &&
+        request.resource.data.companyId == getUserData().companyId
+      );
+      
+      // Admin can delete anything. Donos/Alimentadores can only delete their own company's items.
+      allow delete: if isAdmin() || (
+        isAlimentador() && 
+        resource.data.companyId == getUserData().companyId
+      );
     }
 
-    // Movements Collection rules
+    // Movements Collection rules (Audit Logs)
     match /movements/{movementId} {
-      allow read, write: if isAdmin() || (isAuth() && (
-        (resource == null || resource.data.userId == request.auth.uid) &&
-        (request.resource == null || request.resource.data.userId == request.auth.uid)
-      ));
+      // Admins and Vendedores can read all movements.
+      // Alimentadores (Company Owners) can only read their own company's movements.
+      allow read: if isAdmin() || isVendedor() || (
+        isAuth() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        resource.data.companyId == getUserData().companyId
+      );
+      
+      // Admin can create. Donos/Alimentadores can only log movements for their own company.
+      allow create: if isAdmin() || (
+        isAlimentador() && 
+        request.resource.data.companyId == getUserData().companyId
+      );
+      
+      // Audit logs are read-only and cannot be updated or deleted by normal users
+      allow update, delete: if isAdmin();
     }
   }
 }

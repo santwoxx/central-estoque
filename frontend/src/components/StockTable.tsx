@@ -41,6 +41,12 @@ export default function StockTable({ items, isAdmin, user, companies, onUpdateIt
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingItem, setEditingItem] = useState<StockItem | null>(null);
+  
+  // Checkout Modal (Saída de Estoque)
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [checkoutItemId, setCheckoutItemId] = useState("");
+  const [checkoutQuantity, setCheckoutQuantity] = useState(1);
+  const [checkoutReason, setCheckoutReason] = useState("Venda");
 
   // Form Fields (Add/Edit)
   const [formSku, setFormSku] = useState("");
@@ -227,6 +233,59 @@ export default function StockTable({ items, isAdmin, user, companies, onUpdateIt
     }
   };
 
+  const handleOpenCheckout = (preselectedItem?: StockItem) => {
+    setErrorMsg("");
+    setCheckoutQuantity(1);
+    setCheckoutReason("Venda");
+    if (preselectedItem) {
+      setCheckoutItemId(preselectedItem.id);
+    } else {
+      setCheckoutItemId(items[0]?.id || "");
+    }
+    setShowCheckoutModal(true);
+  };
+
+  const handleSaveCheckout = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!checkoutItemId) {
+      setErrorMsg("Por favor, selecione um pneu.");
+      return;
+    }
+    if (checkoutQuantity <= 0) {
+      setErrorMsg("A quantidade deve ser maior que zero.");
+      return;
+    }
+
+    const item = items.find(i => i.id === checkoutItemId);
+    if (!item) {
+      setErrorMsg("Pneu não encontrado.");
+      return;
+    }
+
+    if (checkoutQuantity > item.quantity) {
+      setErrorMsg(`Quantidade insuficiente em estoque. Disponível: ${item.quantity}`);
+      return;
+    }
+
+    setSubmitting(true);
+    setErrorMsg("");
+
+    try {
+      const newQty = item.quantity - checkoutQuantity;
+      const reason = checkoutReason.trim() || "Saída / Baixa manual";
+      
+      await onUpdateItem(item.id, { quantity: newQty }, reason, -checkoutQuantity);
+      setShowCheckoutModal(false);
+      setCheckoutItemId("");
+      setCheckoutQuantity(1);
+      setCheckoutReason("Venda");
+    } catch (err: any) {
+      setErrorMsg(err.message || "Erro ao dar baixa no pneu.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="space-y-5 animate-fadeIn">
         {/* Search and Filters Hub */}
@@ -271,6 +330,15 @@ export default function StockTable({ items, isAdmin, user, companies, onUpdateIt
               </button>
             )}
           </div>
+
+          {/* Checkout product action trigger */}
+          <button
+            type="button"
+            onClick={() => handleOpenCheckout()}
+            className="flex items-center justify-center gap-1.5 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-extrabold rounded-xl text-xs shadow-md border border-slate-700/30 transition-all cursor-pointer whitespace-nowrap shrink-0 hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <TrendingDown size={15} className="stroke-[2.5px] text-red-400" /> Saída de Pneus
+          </button>
 
           {/* Add product action trigger */}
           <button
@@ -518,8 +586,15 @@ export default function StockTable({ items, isAdmin, user, companies, onUpdateIt
                           <td className="py-2 px-4 text-center align-middle">
                             <div className="flex items-center justify-center gap-1.5">
                               <button
+                                onClick={() => handleOpenCheckout(item)}
+                                className="p-1.5 text-red-550 hover:bg-red-50 rounded transition-colors border border-transparent hover:border-red-200 cursor-pointer"
+                                title="Registrar saída deste pneu (Baixa)"
+                              >
+                                <TrendingDown size={13} className="stroke-[2.5px]" />
+                              </button>
+                              <button
                                 onClick={() => handleOpenEdit(item)}
-                                className="p-1.5 text-blue-600 hover:bg-slate-100 rounded transition-colors border border-transparent hover:border-slate-200"
+                                className="p-1.5 text-blue-600 hover:bg-slate-100 rounded transition-colors border border-transparent hover:border-slate-200 cursor-pointer"
                                 title="Ajustar estoque ou dados"
                               >
                                 <Edit size={13} className="stroke-[2.5px]" />
@@ -530,7 +605,7 @@ export default function StockTable({ items, isAdmin, user, companies, onUpdateIt
                                     onDeleteItem(item.id);
                                   }
                                 }}
-                                className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors border border-transparent hover:border-red-200"
+                                className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors border border-transparent hover:border-red-200 cursor-pointer"
                                 title="Deletar permanentemente"
                               >
                                 <Trash2 size={13} className="stroke-[2.5px]" />
@@ -683,6 +758,12 @@ export default function StockTable({ items, isAdmin, user, companies, onUpdateIt
 
                     {/* Additional standard actions for edit/delete */}
                     <div className="flex justify-end gap-2 pt-1 border-t border-slate-50">
+                      <button
+                        onClick={() => handleOpenCheckout(item)}
+                        className="py-1 px-3 text-[10px] font-bold text-red-650 bg-red-50 hover:bg-red-100 rounded border border-red-150 transition-colors flex items-center gap-1 cursor-pointer"
+                      >
+                        <TrendingDown size={10} /> Registrar Saída
+                      </button>
                       <button
                         onClick={() => handleOpenEdit(item)}
                         className="py-1 px-3 text-[10px] font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded border border-slate-200 transition-colors flex items-center gap-1 cursor-pointer"
@@ -1180,6 +1261,137 @@ export default function StockTable({ items, isAdmin, user, companies, onUpdateIt
                   className="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded disabled:opacity-50 transition-colors cursor-pointer"
                 >
                   {submitting ? "Gravando..." : "Salvar Alterações"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: BAIXA DE ESTOQUE (SAÍDA DE PNEUS) */}
+      {showCheckoutModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/55 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 border border-slate-200/85 shadow-2xl animate-scaleUp overflow-y-auto max-h-[90vh] font-sans">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-lg bg-red-50 text-red-650 flex items-center justify-center border border-red-100/50 shadow-inner">
+                  <TrendingDown size={16} className="stroke-[2.5px]" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900 uppercase tracking-wide">Saída de Pneus</h3>
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest leading-none">Baixa de estoque</p>
+                </div>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setShowCheckoutModal(false)} 
+                className="p-1.5 text-slate-400 hover:text-slate-900 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {errorMsg && (
+              <div className="mt-3 bg-red-50 text-red-750 text-xs p-2.5 rounded-xl border border-red-100/80 font-semibold">
+                {errorMsg}
+              </div>
+            )}
+
+            <form onSubmit={handleSaveCheckout} className="mt-4 space-y-4 text-sm text-left">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Selecionar Pneu / Peça</label>
+                <select
+                  value={checkoutItemId}
+                  onChange={(e) => {
+                    setCheckoutItemId(e.target.value);
+                    setErrorMsg("");
+                  }}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-gold-500/20 focus:border-gold-500 bg-slate-50 text-slate-900 font-semibold cursor-pointer"
+                >
+                  <option value="" disabled>Escolha um pneu...</option>
+                  {items.map(item => (
+                    <option key={item.id} value={item.id}>
+                      [{item.sku}] {item.brand} {item.model} {item.size} (Estoque: {item.quantity} un)
+                    </option>
+                  ))}
+                </select>
+                {items.length === 0 && (
+                  <span className="text-[10px] text-red-500 font-semibold block mt-1">
+                    Não há produtos disponíveis no estoque desta empresa.
+                  </span>
+                )}
+              </div>
+
+              {checkoutItemId && (
+                (() => {
+                  const selectedItem = items.find(i => i.id === checkoutItemId);
+                  if (!selectedItem) return null;
+                  return (
+                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center justify-between text-xs font-semibold">
+                      <span className="text-slate-550">Disponível em estoque:</span>
+                      <span className={`px-2 py-0.5 rounded-md font-extrabold ${selectedItem.quantity <= 4 ? "bg-red-50 text-red-700 border border-red-100" : "bg-emerald-50 text-emerald-800 border border-emerald-100"}`}>
+                        {selectedItem.quantity} unidades
+                      </span>
+                    </div>
+                  );
+                })()
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Quantidade Vendida</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={checkoutQuantity}
+                    onChange={(e) => setCheckoutQuantity(Math.max(1, parseInt(e.target.value) || 0))}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold font-mono outline-none focus:ring-2 focus:ring-gold-500/20 focus:border-gold-500 bg-slate-50 text-slate-900"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Motivo da Saída</label>
+                  <select
+                    value={checkoutReason}
+                    onChange={(e) => setCheckoutReason(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-gold-500/20 focus:border-gold-500 bg-slate-50 text-slate-900 font-semibold cursor-pointer"
+                  >
+                    <option value="Venda">Venda</option>
+                    <option value="Ajuste de Estoque">Ajuste de Estoque</option>
+                    <option value="Defeito / Descarte">Defeito / Descarte</option>
+                    <option value="Uso Interno">Uso Interno</option>
+                    <option value="Outro">Outro</option>
+                  </select>
+                </div>
+              </div>
+
+              {checkoutReason === "Outro" && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Especificar Outro Motivo</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Doação, brinde, etc..."
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-gold-500/20 focus:border-gold-500 bg-slate-50 text-slate-900 font-semibold"
+                    onChange={(e) => setCheckoutReason(e.target.value)}
+                    required
+                  />
+                </div>
+              )}
+
+              <div className="pt-3 border-t border-slate-100 flex gap-2 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowCheckoutModal(false)}
+                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 rounded-xl border border-slate-200 transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting || items.length === 0 || !checkoutItemId}
+                  className="px-5 py-2 text-xs font-extrabold text-white bg-slate-900 hover:bg-slate-800 rounded-xl disabled:opacity-50 transition-colors cursor-pointer shadow-md flex items-center gap-1.5"
+                >
+                  {submitting ? "Processando..." : "Confirmar Saída"}
                 </button>
               </div>
             </form>

@@ -213,7 +213,7 @@ export default function MovementReports({ logs, isAdmin }: MovementReportsProps)
                   <th className="py-3 px-5 font-black">Operação</th>
                   <th className="py-3 px-5 text-center font-black">Quantidade</th>
                   <th className="py-3 px-5 text-center font-black">Saldo Restante</th>
-                  {isAdmin && <th className="py-3 px-5 font-black">Colaborador</th>}
+                  <th className="py-3 px-5 font-black">Colaborador</th>
                   <th className="py-3 px-5 font-black">Motivação / Descrição</th>
                 </tr>
               </thead>
@@ -281,17 +281,15 @@ export default function MovementReports({ logs, isAdmin }: MovementReportsProps)
                         </span>
                       </td>
 
-                      {/* Owner column (Visible to admin only) */}
-                      {isAdmin && (
-                        <td className="py-2.5 px-5 text-slate-600 font-medium">
-                          <div className="flex items-center gap-1.5 max-w-[150px] truncate" title={log.userEmail}>
-                            <User size={11} className="text-gold-600 shrink-0" />
-                            <span className="truncate max-w-full text-[10px] font-bold">
-                              {log.userEmail.split('@')[0]}
-                            </span>
-                          </div>
-                        </td>
-                      )}
+                      {/* Colaborador column */}
+                      <td className="py-2.5 px-5 text-slate-600 font-medium">
+                        <div className="flex items-center gap-1.5 max-w-[150px] truncate" title={log.userEmail}>
+                          <User size={11} className="text-gold-600 shrink-0" />
+                          <span className="truncate max-w-full text-[10px] font-bold">
+                            {log.userEmail.split('@')[0]}
+                          </span>
+                        </div>
+                      </td>
 
                       {/* Detailed reason column */}
                       <td className="py-2.5 px-5 text-xs text-slate-600 font-semibold max-w-[200px] truncate" title={log.reason}>
